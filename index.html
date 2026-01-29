@@ -75,12 +75,14 @@ button {
 let datos = JSON.parse(localStorage.getItem("produccion")) || {};
 let mesActual = localStorage.getItem("mesActivo") || "";
 
+// Si hay un mes guardado, cargarlo al abrir
 if (mesActual && datos[mesActual]) {
   document.getElementById("mes").value = mesActual;
   document.getElementById("potenciales").value = datos[mesActual].potenciales;
   actualizar();
 }
 
+// Guardar o cambiar mes
 function guardarMes() {
   mesActual = document.getElementById("mes").value;
   const potenciales = Number(document.getElementById("potenciales").value);
@@ -98,6 +100,7 @@ function guardarMes() {
   actualizar();
 }
 
+// Añadir OT
 function addOT() {
   if (!mesActual) return alert("Guarda primero el mes");
 
@@ -112,6 +115,7 @@ function addOT() {
   actualizar();
 }
 
+// Actualiza pantalla
 function actualizar() {
   const mes = datos[mesActual];
   if (!mes) return;
@@ -124,7 +128,7 @@ function actualizar() {
 
   document.getElementById("resumen").innerHTML = `
     Horas vendidas: <b>${vendidas.toFixed(2)}</b><br>
-    Potenciales (−5%): <b>${potencialesAjustadas.toFixed(2)}</b><br>
+    Potenciales (−5%): <b>${potencialesh.toFixed(2)}</b><br>
     Prima: <b>${primaHoras.toFixed(2)} h</b><br>
     💰 ${primaEuros.toFixed(2)} €<br>
     Producción: <b>${produccion.toFixed(1)}%</b>
@@ -137,10 +141,12 @@ function actualizar() {
   });
 }
 
+// Guardar en localStorage
 function guardar() {
   localStorage.setItem("produccion", JSON.stringify(datos));
 }
 </script>
+
 
 
 </body>
