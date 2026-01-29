@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Producción Taller</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 15px;
+}
+h1, h2 {
+  text-align: center;
+}
+.card {
+  background: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+}
+input, select, button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+}
+button {
+  background: #007bff;
+  color: white;
+  border: none;
+  margin-top: 10px;
+}
+.result {
+  font-size: 16px;
+  margin-top: 5px;
+}
+.ot {
+  border-bottom: 1px solid #ddd;
+  padding: 5px 0;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📊 Producción Taller</h1>
+
+<div class="card">
+  <h2>Mes</h2>
+  <input id="mes" placeholder="Ej: Febrero 2026">
+  <input id="potenciales" type="number" placeholder="Horas potenciales del mes">
+  <button onclick="guardarMes()">Guardar / Cargar mes</button>
+</div>
+
+<div class="card">
+  <h2>Añadir OT</h2>
+  <input id="otNumero" placeholder="Número OT">
+  <input id="horas" type="number" placeholder="Horas">
+  <input id="minutos" type="number" placeholder="Minutos">
+  <button onclick="addOT()">Añadir OT</button>
+</div>
+
+<div class="card">
+  <h2>Resumen mensual</h2>
+  <div class="result" id="resumen"></div>
+</div>
+
+<div class="card">
+  <h2>OTs del mes</h2>
+  <div id="listaOT"></div>
+</div>
+
+<script>
+let datos = JSON.parse(localStorage.getItem("produccion")) || {};
+let mesActual = "";
+
+function guardarMes() {
+  mesActual = document.getElementById("mes").value;
+  const potenciales = Number(document.getElementById("potenciales").value);
+
+  if (!mesActual) return alert("Pon el mes");
+
+  if (!datos[mesActual]) {
+    datos[mesActual] = { potenciales, ots: [] };
+  } else {
+    datos[mesActual].potenciales = potenciales;
+  }
+
+  guardar();
+  actualizar();
+}
+
+function addOT() {
+  if (!mesActual) return alert("Guarda primero el mes");
+
+  const ot = document.getElementById("otNumero").value;
+  const h = Number(document.getElementById("horas").value);
+  const m = Number(document.getElementById("minutos").value);
+
+  const totalHoras = h + (m / 60);
+
+  datos[mesActual].ots.push({ ot, horas: totalHoras });
+  guardar();
+  actualizar();
+}
+
+function actualizar() {
+  const mes = datos[mesActual];
+  if (!mes) return;
+
+  let vendidas = mes.ots.reduce((s, o) => s + o.horas, 0);
+  let potencialesAjustadas = mes.potenciales * 0.95;
+  let primaHoras = Math.max(0, vendidas - potencialesAjustadas);
+  let primaEuros = primaHoras * 14;
+  let produccion = (vendidas / potencialesAjustadas) * 100;
+
+  document.getElementById("resumen").innerHTML = `
+    Horas vendidas: <b>${vendidas.toFixed(2)}</b><br>
+    Potenciales (−5%): <b>${potencialesAjustadas.toFixed(2)}</b><br>
+    Prima: <b>${primaHoras.toFixed(2)} h</b><br>
+    💰 ${primaEuros.toFixed(2)} €<br>
+    Producción: <b>${produccion.toFixed(1)}%</b>
+  `;
+
+  const lista = document.getElementById("listaOT");
+  lista.innerHTML = "";
+  mes.ots.forEach(o => {
+    lista.innerHTML += `<div class="ot">OT ${o.ot} → ${o.horas.toFixed(2)} h</div>`;
+  });
+}
+
+function guardar() {
+  localStorage.setItem("produccion", JSON.stringify(datos));
+}
+</script>
+
+</body>
+</html>
