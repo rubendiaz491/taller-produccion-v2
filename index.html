@@ -20,6 +20,14 @@
   }
   .produccion { font-weight: bold; }
   .prima { font-weight: bold; }
+  .barra-produccion {
+    height: 20px; border-radius: 10px; background: #ddd; margin-top: 5px; overflow: hidden;
+  }
+  .barra-produccion-inner {
+    height: 100%; width: 0%; background: green; text-align: right; padding-right: 5px;
+    color: white; font-weight: bold; border-radius: 10px;
+    box-sizing: border-box;
+  }
 </style>
 </head>
 <body>
@@ -31,6 +39,7 @@
 <button onclick="nuevoMes()">+ Nuevo Mes</button>
 Horas potenciales: <input type="number" id="potenciales" placeholder="160">
 <button onclick="guardarMes()">Guardar / Cargar mes</button>
+<button onclick="borrarMes()" style="background-color:red;color:white;">Borrar mes</button>
 
 <hr>
 
@@ -45,6 +54,9 @@ Minutos: <input type="number" id="minutos" placeholder="30">
 <!-- Resumen mensual -->
 <div id="resumen"></div>
 
+<!-- Barra de progreso de producción -->
+<div class="barra-produccion"><div class="barra-produccion-inner" id="barraProd">0%</div></div>
+
 <!-- Lista de OTs -->
 <div id="listaOT"></div>
 
@@ -52,18 +64,20 @@ Minutos: <input type="number" id="minutos" placeholder="30">
 let datos = JSON.parse(localStorage.getItem("produccion")) || {};
 let mesActual = localStorage.getItem("mesActivo") || "";
 
+// Actualizar selector
 function actualizarSelector(){
   const select = document.getElementById("mes");
   select.innerHTML = "";
-  for (let mes in datos){
+  for(let mes in datos){
     const opt = document.createElement("option");
     opt.value = mes;
     opt.textContent = mes;
-    if(mes === mesActual) opt.selected = true;
+    if(mes===mesActual) opt.selected = true;
     select.appendChild(opt);
   }
 }
 
+// Crear nuevo mes
 function nuevoMes(){
   const nuevo = prompt("Nombre del nuevo mes (Ej: Febrero 2026)");
   if(!nuevo) return;
@@ -79,6 +93,7 @@ function nuevoMes(){
   } else alert("Ese mes ya existe");
 }
 
+// Cambiar mes desde selector
 function cambiarMes(){
   mesActual = document.getElementById("mes").value;
   localStorage.setItem("mesActivo", mesActual);
@@ -86,6 +101,7 @@ function cambiarMes(){
   actualizar();
 }
 
+// Guardar mes
 function guardarMes(){
   if(!mesActual) return alert("Selecciona o crea un mes primero");
   datos[mesActual].potenciales = Number(document.getElementById("potenciales").value);
@@ -93,6 +109,7 @@ function guardarMes(){
   actualizar();
 }
 
+// Añadir OT
 function addOT(){
   if(!mesActual) return alert("Selecciona o crea un mes primero");
   const ot = document.getElementById("otNumero").value;
@@ -108,6 +125,7 @@ function addOT(){
   document.getElementById("minutos").value="";
 }
 
+// Borrar OT
 function borrarOT(index){
   if(!mesActual) return;
   datos[mesActual].ots.splice(index,1);
@@ -115,49 +133,6 @@ function borrarOT(index){
   actualizar();
 }
 
-function actualizar(){
-  if(!mesActual) return;
-  const mes = datos[mesActual];
-  if(!mes) return;
-
-  let vendidas = mes.ots.reduce((s,o)=>s+o.horas,0);
-  let potencialesAjustadas = mes.potenciales*0.95;
-  let primaHoras = Math.max(0,vendidas-potencialesAjustadas);
-  let primaEuros = primaHoras*14;
-  let produccion = (vendidas/potencialesAjustadas)*100;
-
-  // Colores dinámicos
-  let colorProd = produccion<100?"red":(produccion===100?"orange":"green");
-  let colorPrima = primaHoras>0?"green":"gray";
-
-  document.getElementById("resumen").innerHTML=`
-    <b>${mesActual}</b><br>
-    Horas vendidas: <b>${vendidas.toFixed(2)}</b><br>
-    Potenciales (−5%): <b>${potencialesAjustadas.toFixed(2)}</b><br>
-    Prima: <span class="prima" style="color:${colorPrima}">${primaHoras.toFixed(2)} h</span> 💰 ${primaEuros.toFixed(2)} €<br>
-    Producción: <span class="produccion" style="color:${colorProd}">${produccion.toFixed(1)}%</span>
-  `;
-
-  const lista = document.getElementById("listaOT");
-  lista.innerHTML="";
-  mes.ots.forEach((o,i)=>{
-    lista.innerHTML += `<div class="ot">OT ${o.ot} → ${o.horas.toFixed(2)} h
-      <button onclick="borrarOT(${i})">Borrar</button></div>`;
-  });
-
-  actualizarSelector();
-}
-
-function guardar(){ localStorage.setItem("produccion",JSON.stringify(datos)); }
-actualizarSelector();
-if(mesActual){
-  document.getElementById("mes").value = mesActual;
-  document.getElementById("potenciales").value = datos[mesActual].potenciales;
-  actualizar();
-}
-</script>
-
-</body>
-</html>
-
-
+// Borrar mes completo
+function borrarMes(){
+  if(!mesActual)
