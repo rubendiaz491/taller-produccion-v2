@@ -5,17 +5,21 @@
 <title>Gestión Taller</title>
 <style>
   body { font-family: sans-serif; margin: 20px; }
-  input { margin: 2px; }
+  input, select { margin: 2px; }
   button { margin: 5px; }
   .ot { padding: 2px 0; }
+  .ot button { margin-left: 10px; }
 </style>
 </head>
 <body>
 
 <h2>Gestión Taller — OTs y Prima</h2>
 
-<!-- Selección de mes y horas potenciales -->
-Mes: <input type="text" id="mes" placeholder="Ej: Febrero">
+<!-- Selector de mes -->
+Mes: 
+<select id="mes" onchange="cambiarMes()">
+</select>
+<button onclick="nuevoMes()">Nuevo Mes</button>
 Horas potenciales: <input type="number" id="potenciales" placeholder="160">
 <button onclick="guardarMes()">Guardar / Cargar mes</button>
 
@@ -30,90 +34,131 @@ Minutos: <input type="number" id="minutos" placeholder="30">
 <hr>
 
 <!-- Resumen mensual -->
-<div id="resumen">
-  <!-- Aquí se mostrarán horas vendidas, prima, producción -->
-</div>
+<div id="resumen"></div>
 
 <!-- Lista de OTs -->
-<div id="listaOT">
-  <!-- Aquí se mostrarán las OTs -->
-</div>
+<div id="listaOT"></div>
 
 <script>
 let datos = JSON.parse(localStorage.getItem("produccion")) || {};
 let mesActual = localStorage.getItem("mesActivo") || "";
 
-// Cargar último mes al abrir la web
-if (mesActual && datos[mesActual]) {
-  document.getElementById("mes").value = mesActual;
+// Inicializar selector de meses
+function actualizarSelector() {
+  const select = document.getElementById("mes");
+  select.innerHTML = "";
+  for (let mes in datos) {
+    const option = document.createElement("option");
+    option.value = mes;
+    option.textContent = mes;
+    if(mes === mesActual) option.selected = true;
+    select.appendChild(option);
+  }
+}
+
+// Nuevo mes
+function nuevoMes() {
+  const nuevo = prompt("Nombre del nuevo mes (Ej: Febrero 2026)");
+  if (!nuevo) return;
+  if (!datos[nuevo]) {
+    datos[nuevo] = { potenciales: 160, ots: [] };
+    mesActual = nuevo;
+    localStorage.setItem("mesActivo", mesActual);
+    guardar();
+    actualizarSelector();
+    document.getElementById("mes").value = mesActual;
+    document.getElementById("potenciales").value = 160;
+    actualizar();
+  } else {
+    alert("Ese mes ya existe");
+  }
+}
+
+// Cambiar mes desde selector
+function cambiarMes() {
+  mesActual = document.getElementById("mes").value;
+  localStorage.setItem("mesActivo", mesActual);
   document.getElementById("potenciales").value = datos[mesActual].potenciales;
   actualizar();
 }
 
-// Guardar o cambiar mes
+// Guardar mes (horas potenciales)
 function guardarMes() {
-  mesActual = document.getElementById("mes").value;
+  if (!mesActual) return alert("Selecciona o crea un mes primero");
   const potenciales = Number(document.getElementById("potenciales").value);
-
-  if (!mesActual) return alert("Pon el mes");
-
-  if (!datos[mesActual]) {
-    datos[mesActual] = { potenciales, ots: [] };
-  } else {
-    datos[mesActual].potenciales = potenciales;
-  }
-
-  localStorage.setItem("mesActivo", mesActual);
+  datos[mesActual].potenciales = potenciales;
   guardar();
   actualizar();
 }
 
 // Añadir OT
 function addOT() {
-  if (!mesActual) return alert("Guarda primero el mes");
-
+  if (!mesActual) return alert("Selecciona o crea un mes primero");
   const ot = document.getElementById("otNumero").value;
   const h = Number(document.getElementById("horas").value);
   const m = Number(document.getElementById("minutos").value);
-
-  const totalHoras = h + (m / 60);
-
+  if(!ot) return alert("Pon número de OT");
+  const totalHoras = h + (m/60);
   datos[mesActual].ots.push({ ot, horas: totalHoras });
+  guardar();
+  actualizar();
+  document.getElementById("otNumero").value = "";
+  document.getElementById("horas").value = "";
+  document.getElementById("minutos").value = "";
+}
+
+// Borrar OT
+function borrarOT(index) {
+  if (!mesActual) return;
+  datos[mesActual].ots.splice(index,1);
   guardar();
   actualizar();
 }
 
-// Actualiza pantalla
+// Actualizar pantalla
 function actualizar() {
+  if (!mesActual) return;
   const mes = datos[mesActual];
-  if (!mes) return;
-
-  let vendidas = mes.ots.reduce((s, o) => s + o.horas, 0);
+  if(!mes) return;
+  
+  let vendidas = mes.ots.reduce((s,o)=>s+o.horas,0);
   let potencialesAjustadas = mes.potenciales * 0.95;
   let primaHoras = Math.max(0, vendidas - potencialesAjustadas);
   let primaEuros = primaHoras * 14;
   let produccion = (vendidas / potencialesAjustadas) * 100;
 
   document.getElementById("resumen").innerHTML = `
+    <b>${mesActual}</b><br>
     Horas vendidas: <b>${vendidas.toFixed(2)}</b><br>
     Potenciales (−5%): <b>${potencialesAjustadas.toFixed(2)}</b><br>
-    Prima: <b>${primaHoras.toFixed(2)} h</b><br>
-    💰 ${primaEuros.toFixed(2)} €<br>
+    Prima: <b>${primaHoras.toFixed(2)} h</b> 💰 ${primaEuros.toFixed(2)} €<br>
     Producción: <b>${produccion.toFixed(1)}%</b>
   `;
 
   const lista = document.getElementById("listaOT");
   lista.innerHTML = "";
-  mes.ots.forEach(o => {
-    lista.innerHTML += `<div class="ot">OT ${o.ot} → ${o.horas.toFixed(2)} h</div>`;
+  mes.ots.forEach((o,i)=>{
+    lista.innerHTML += `<div class="ot">OT ${o.ot} → ${o.horas.toFixed(2)} h
+      <button onclick="borrarOT(${i})">Borrar</button></div>`;
   });
+
+  actualizarSelector();
 }
 
 // Guardar en localStorage
 function guardar() {
   localStorage.setItem("produccion", JSON.stringify(datos));
 }
+
+// Inicialización al abrir
+actualizarSelector();
+if(mesActual) {
+  document.getElementById("mes").value = mesActual;
+  document.getElementById("potenciales").value = datos[mesActual].potenciales;
+  actualizar();
+}
 </script>
 
 </body>
 </html>
+
