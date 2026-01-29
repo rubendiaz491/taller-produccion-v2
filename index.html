@@ -128,7 +128,7 @@ function actualizar() {
 
   document.getElementById("resumen").innerHTML = `
     Horas vendidas: <b>${vendidas.toFixed(2)}</b><br>
-    Potenciales (−5%): <b>${potencialesh.toFixed(2)}</b><br>
+    Potenciales (−5%): <b>${potencialesAjustadas.toFixed(2)}</b><br>
     Prima: <b>${primaHoras.toFixed(2)} h</b><br>
     💰 ${primaEuros.toFixed(2)} €<br>
     Producción: <b>${produccion.toFixed(1)}%</b>
@@ -146,6 +146,7 @@ function guardar() {
   localStorage.setItem("produccion", JSON.stringify(datos));
 }
 </script>
+
 
 
 
