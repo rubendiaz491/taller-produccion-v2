@@ -2,80 +2,48 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Producción Taller</title>
+<title>Gestión Taller</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
-  margin: 0;
-  padding: 15px;
-}
-h1, h2 {
-  text-align: center;
-}
-.card {
-  background: white;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 8px;
-}
-input, select, button {
-  width: 100%;
-  padding: 8px;
-  margin-top: 5px;
-}
-button {
-  background: #007bff;
-  color: white;
-  border: none;
-  margin-top: 10px;
-}
-.result {
-  font-size: 16px;
-  margin-top: 5px;
-}
-.ot {
-  border-bottom: 1px solid #ddd;
-  padding: 5px 0;
-}
+  body { font-family: sans-serif; margin: 20px; }
+  input { margin: 2px; }
+  button { margin: 5px; }
+  .ot { padding: 2px 0; }
 </style>
 </head>
-
 <body>
 
-<h1>📊 Producción Taller</h1>
+<h2>Gestión Taller — OTs y Prima</h2>
 
-<div class="card">
-  <h2>Mes</h2>
-  <input id="mes" placeholder="Ej: Febrero 2026">
-  <input id="potenciales" type="number" placeholder="Horas potenciales del mes">
-  <button onclick="guardarMes()">Guardar / Cargar mes</button>
+<!-- Selección de mes y horas potenciales -->
+Mes: <input type="text" id="mes" placeholder="Ej: Febrero">
+Horas potenciales: <input type="number" id="potenciales" placeholder="160">
+<button onclick="guardarMes()">Guardar / Cargar mes</button>
+
+<hr>
+
+<!-- Añadir OT -->
+OT número: <input type="text" id="otNumero" placeholder="61450">
+Horas: <input type="number" id="horas" placeholder="1">
+Minutos: <input type="number" id="minutos" placeholder="30">
+<button onclick="addOT()">Añadir OT</button>
+
+<hr>
+
+<!-- Resumen mensual -->
+<div id="resumen">
+  <!-- Aquí se mostrarán horas vendidas, prima, producción -->
 </div>
 
-<div class="card">
-  <h2>Añadir OT</h2>
-  <input id="otNumero" placeholder="Número OT">
-  <input id="horas" type="number" placeholder="Horas">
-  <input id="minutos" type="number" placeholder="Minutos">
-  <button onclick="addOT()">Añadir OT</button>
-</div>
-
-<div class="card">
-  <h2>Resumen mensual</h2>
-  <div class="result" id="resumen"></div>
-</div>
-
-<div class="card">
-  <h2>OTs del mes</h2>
-  <div id="listaOT"></div>
+<!-- Lista de OTs -->
+<div id="listaOT">
+  <!-- Aquí se mostrarán las OTs -->
 </div>
 
 <script>
 let datos = JSON.parse(localStorage.getItem("produccion")) || {};
 let mesActual = localStorage.getItem("mesActivo") || "";
 
-// Si hay un mes guardado, cargarlo al abrir
+// Cargar último mes al abrir la web
 if (mesActual && datos[mesActual]) {
   document.getElementById("mes").value = mesActual;
   document.getElementById("potenciales").value = datos[mesActual].potenciales;
@@ -146,9 +114,6 @@ function guardar() {
   localStorage.setItem("produccion", JSON.stringify(datos));
 }
 </script>
-
-
-
 
 </body>
 </html>
